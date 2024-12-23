@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unicornio 3D CAD</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/classic.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">    
+    <style>
+        body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
+        .button-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        .control-button, .color-picker {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            background-color: #1f78b4;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.3s;
+            position: relative; /* Para posicionar tooltips */
+        }
+        .control-button:hover, .color-picker:hover {
+            background-color: #0056b3;
+        }
+        .control-button.active {
+            background-color: #28a745;
+        }
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #ff7eb9, #ff65a3, #7afcff);
+            padding: 30px;
+            box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.4);
+            border-radius: 20px;
+            text-align: center;
+            z-index: 2;
+            animation: fadeOut 3s forwards;
+        }
+        .popup h1 {
+            margin: 0;
+            font-size: 36px;
+            color: white;
+        }
+        .popup p {
+            margin: 10px 0;
+            font-size: 20px;
+            color: white;
+        }
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            100% { opacity: 0; visibility: hidden; }
+        }
+        /* Estilo para los inputs de archivo ocultos */
+        #file-input, #hdr-input, #scene-input {
+            display: none;
+        }
+        /* Barra de botones vertical en la izquierda para Vista 2D */
+        .left-button-container {
+            position: fixed;
+            top: 50%;
+            left: 20px;
+            transform: translateY(-50%);
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            display: none; /* Oculto por defecto */
+        }
+        .left-button-container .control-button {
+            width: 60px;
+            height: 60px;
+            background-color: #1f78b4;
+            font-size: 20px;
+        }
+        .left-button-container .control-button:hover {
+            background-color: #0056b3;
+        }
+        /* Estilo específico para el botón de salir de Vista 2D */
+        .left-button-container .control-button#exit-2d-view {
+            background-color: #d9534f;
+        }
+        .left-button-container .control-button#exit-2d-view:hover {
+            background-color: #c9302c;
+        }
+        /* Estilo específico para el botón de Trazado Libre activo */
+        .left-button-container .control-button#free-draw.active {
+            background-color: #28a745; /* Verde */
+        }
+        /* Estilos para los tooltips */
+        .control-button[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 70px; /* Ajusta según sea necesario */
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: #fff;
+            padding: 5px 8px;
+            border-radius: 5px;
+            white-space: nowrap;
+            z-index: 100;
+            font-size: 14px;
+        }
+        /* Estilos para la barra lateral derecha */
+        .sidebar {
+            position: fixed;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 1;
+        }
+        /* Panel lateral para edición de propiedades */
+        .property-panel {
+            position: fixed;
+            top: 20%;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            z-index: 1;
+            display: none; /* Oculto por defecto */
+        }
+
+
+
+
+
+
+        .property-panel {
+    position: fixed;
+    top: 20px; /* Ajusta según sea necesario */
+    right: 20px; /* Ajusta según sea necesario */
+    width: 300px; /* Ajusta el ancho del panel */
+    max-height: 80%; /* Altura máxima */
+    overflow-y: auto; /* Desplazamiento si el contenido excede el tamaño */
+    background: white; /* Fondo blanco */
+    padding: 15px; /* Espaciado interior */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra para dar profundidad */
+    border-radius: 10px; /* Bordes redondeados */
+    z-index: 100; /* Asegúrate de que esté por encima de otros elementos */
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between; /* Espacio entre título y botón de cerrar */
+    align-items: center; /* Centra verticalmente */
+}
+
+#close-panel {
+    border: none; /* Sin borde */
+    background: none; /* Sin fondo */
+    font-size: 20px; /* Tamaño del botón */
+    cursor: pointer; /* Cursor de puntero */
+}
+
+#close-panel:hover {
+    color: red; /* Cambia de color al pasar el mouse */
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    </style>
+</head>
+<body>
+    <div class="popup" id="popup">
+        <h1><i class="fas fa-unicorn"></i> Unicornio 3D CAD 🦄</h1>
+        <p>Versión 1.0.0</p>
+    </div>
+    <div class="button-container">
+
+        <button class="control-button" id="rotate-grid" title="Rotar Rejilla"><i class="fas fa-sync"></i></button>
+
+
+        <button class="control-button" id="front-view" title="Vista Frontal (2D)"><i class="fas fa-eye"></i></button>
+
+        <button class="control-button" id="move-object" title="Mover Objeto"><i class="fas fa-arrows-alt"></i></button>
+        <button class="control-button" id="rotate-object" title="Rotar Objeto"><i class="fas fa-sync"></i></button>
+        <button class="control-button" id="scale-object" title="Escalar Objeto"><i class="fas fa-expand"></i></button>
+        <button class="control-button" id="add-box" title="Agregar Caja"><i class="fas fa-plus"></i></button>
+        <button class="control-button" id="drop-box" title="Soltar Caja"><i class="fas fa-box"></i></button>
+        <button class="control-button" id="import-model" title="Importar Modelo"><i class="fas fa-file-import"></i></button>
+        <button class="control-button" id="import-hdr" title="Importar HDR"><i class="fas fa-sun"></i></button>
+        <button class="control-button" id="top-view" title="Vista Superior (2D)"><i class="fas fa-eye"></i></button>
+        <button class="control-button" id="reset-view" title="Restablecer Vista"><i class="fas fa-redo"></i></button> 
+        <button class="control-button" id="toggle-panel" title="Mostrar/Ocultar Panel"><i class="fas fa-cog"></i></button>
+
+
+        <!-- Cambiar el color picker a un botón -->
+        <button class="control-button" id="color-picker" title="Seleccionar Color">
+            <i class="fas fa-paint-brush"></i> <!-- Puedes usar un icono que te guste -->
+        </button>
+
+
+    </div>
+    
+
+    <!-- Barra de botones vertical en la izquierda para Vista 2D -->
+    <div class="left-button-container" id="left-button-container">
+        <button class="control-button" id="add-point" title="Añadir Punto"><i class="fas fa-map-marker-alt"></i></button> <!-- Añadir Punto -->
+        <button class="control-button" id="free-draw" title="Trazado Libre"><i class="fas fa-pencil-alt"></i></button> <!-- Trazado Libre -->
+        <button class="control-button" id="draw-line" title="Dibujar Línea"><i class="fas fa-minus"></i></button> <!-- Dibujar Línea -->
+        <button class="control-button" id="draw-circle" title="Dibujar Círculo"><i class="fas fa-circle"></i></button> <!-- Dibujar Círculo -->
+        <button class="control-button" id="draw-square" title="Dibujar Cuadrado"><i class="fas fa-square"></i></button> <!-- Dibujar Cuadrado -->
+        <button class="control-button" id="exit-2d-view" title="Salir de Vista 2D"><i class="fas fa-times"></i></button> <!-- Salir de Vista 2D -->
+    </div>
+
+    <!-- Barra lateral derecha para acciones de archivo -->
+    <div class="sidebar">
+        <button class="control-button" id="save-scene" title="Guardar Escena"><i class="fas fa-save"></i></button>
+        <button class="control-button" id="load-scene" title="Cargar Escena"><i class="fas fa-folder-open"></i></button>
+    </div>
+
+    <!-- Inputs de archivo ocultos para seleccionar modelos, HDR y escenas -->
+    <input type="file" id="file-input" accept=".gltf, .glb, .obj" multiple>
+    <input type="file" id="hdr-input" accept=".hdr">
+    <input type="file" id="scene-input" accept=".json">
+
+
+
+
+
+<div class="property-panel" id="property-panel" style="display: none;">
+    <div class="panel-header">
+        <h3>Propiedades del Objeto</h3>
+        <button id="close-panel" title="Cerrar Panel">✖️</button>
+    </div>
+    <label for="color-input">Color:</label>
+    <input type="color" id="color-input">
+    <br>
+    
+    <label for="size-input">Tamaño:</label>
+    <input type="number" id="size-input" step="0.1">
+    
+    <label for="rotation-input">Rotación (grados):</label>
+    <input type="number" id="rotation-input" step="1">
+    <br>
+    
+    <label for="position-x-input">Posición X:</label>
+    <input type="number" id="position-x-input" step="0.1">
+    
+    <label for="position-y-input">Posición Y:</label>
+    <input type="number" id="position-y-input" step="0.1">
+    
+    <label for="position-z-input">Posición Z:</label>
+    <input type="number" id="position-z-input" step="0.1">
+
+
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <!-- Declaración global de interactionMode -->
+    <script>
+        var interactionMode = null; // Variable global para los modos de interacción
+    </script>
+    <!-- Librerías necesarias -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/RGBELoader.js"></script> <!-- RGBELoader -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
+    
+    <!-- Archivos JavaScript separados  <source src="https://xococode.github.io/main3D.js" >-->
+    <script src="main3D.js"></script>
+    <script src="main2D.js"></script>
+
+
+</body>
+</html>
